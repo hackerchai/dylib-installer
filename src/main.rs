@@ -127,6 +127,8 @@ fn main() -> Result<()> {
             }
             print_colored(&mut stdout, "Header Target Path: ", &format!("{:?}", header_target_path), Color::Green)?;
             print_colored(&mut stdout, "Pkg-config Path: ", &format!("{:?}", pc_path), Color::Green)?;
+            let pc_full_path = pc_path.join(format!("{}.pc", library_name));
+            print_colored(&mut stdout, "PC File Path: ", &format!("{:?}", pc_full_path), Color::Green)?;
             
             generate_pc_file(&lib_target_path, &pc_path, &library_name, &version, &description)
                 .context("Failed to generate pc file")?;
@@ -142,8 +144,8 @@ fn main() -> Result<()> {
             } else {
                 print_colored(&mut stdout, "Warning: ", "No header files provided, skipping header file copy.", Color::Yellow)?;
             }
-            
-            print_colored(&mut stdout, "Success: ", "Library installation completed successfully", Color::Green)?;
+
+            print_colored(&mut stdout, "Success!!!", " Library installation completed successfully", Color::Green)?;
         }
         Err(ref e) if e.kind() == ErrorKind::MissingRequiredArgument => {
             println!("Error: Missing required arguments: {}", e);
