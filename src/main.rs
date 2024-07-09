@@ -112,6 +112,7 @@ fn main() -> Result<()> {
 
             let header_source_path = matches.get_one::<String>("header_path")
                 .map(PathBuf::from);
+            let header_source_path = header_source_path.as_ref().map(|p| fs::canonicalize(p).context("Failed to convert header_path to absolute path").unwrap());
 
             // print the library information
             let mut stdout = StandardStream::stdout(ColorChoice::Always);
