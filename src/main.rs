@@ -3,6 +3,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command as SysCommand;
 use anyhow::{Context, Result};
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
+use std::io::Write;
 
 fn main() -> Result<()> {
     let app = Command::new("dylib Installer")
@@ -110,15 +112,20 @@ fn main() -> Result<()> {
 
             let header_source_path = matches.get_one::<String>("header_path")
                 .map(PathBuf::from);
-            
-            println!("Library Name: {}", library_name);
-            println!("Version: {}", version);
-            println!("Description: {}", description);
-            println!("Library Source Path: {:?}", lib_source_path);
-            println!("Library Target Path: {:?}", lib_target_path);
-            println!("Header Source Path: {:?}", header_source_path);
-            println!("Header Target Path: {:?}", header_target_path);
-            println!("Pkg-config Path: {:?}", pc_path);
+
+            // print the library information
+            let mut stdout = StandardStream::stdout(ColorChoice::Always);
+
+            print_colored(&mut stdout, "Library Name: ", &library_name, Color::Green)?;
+            print_colored(&mut stdout, "Version: ", &version, Color::Green)?;
+            print_colored(&mut stdout, "Description: ", &description, Color::Green)?;
+            print_colored(&mut stdout, "Library Source Path: ", &format!("{:?}", lib_source_path), Color::Green)?;
+            print_colored(&mut stdout, "Library Target Path: ", &format!("{:?}", lib_target_path), Color::Green)?;
+            if let Some(header_source_path) = &header_source_path {
+                print_colored(&mut stdout, "Header Source Path: ", &format!("{:?}", header_source_path), Color::Green)?;
+            }
+            print_colored(&mut stdout, "Header Target Path: ", &format!("{:?}", header_target_path), Color::Green)?;
+            print_colored(&mut stdout, "Pkg-config Path: ", &format!("{:?}", pc_path), Color::Green)?;
             
             generate_pc_file(&lib_target_path, &pc_path, &library_name, &version, &description)
                 .context("Failed to generate pc file")?;
@@ -129,11 +136,13 @@ fn main() -> Result<()> {
                     copy_header_files(&header_source_path, &header_target_path)
                         .context("Failed to copy header files")?;
                 } else {
-                    println!("Header path provided does not exist, skipping header file copy.");
+                    print_colored(&mut stdout, "Warning: ", "Header path provided does not exist, skipping header file copy.", Color::Yellow)?;
                 }
             } else {
-                println!("No header files provided, skipping header file copy.");
+                print_colored(&mut stdout, "Warning: ", "No header files provided, skipping header file copy.", Color::Yellow)?;
             }
+            
+            print_colored(&mut stdout, "Success: ", "Library installation completed successfully", Color::Green)?;
         }
         Err(ref e) if e.kind() == ErrorKind::MissingRequiredArgument => {
             println!("Error: Missing required arguments: {}", e);
@@ -145,6 +154,15 @@ fn main() -> Result<()> {
         }
     }
 
+    Ok(())
+}
+
+// print colored text
+fn print_colored(stdout: &mut StandardStream, label: &str, value: &str, color: Color) -> Result<()> {
+    stdout.set_color(ColorSpec::new().set_fg(Some(color)))?;
+    write!(stdout, "{}", label)?;
+    stdout.reset()?;
+    writeln!(stdout, "{}", value)?;
     Ok(())
 }
 
