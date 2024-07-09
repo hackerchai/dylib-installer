@@ -111,13 +111,14 @@ fn main() -> Result<()> {
             let header_source_path = matches.get_one::<String>("header_path")
                 .map(PathBuf::from);
             
-            dbg!(lib_source_path.clone());
-            dbg!(lib_target_path.clone());
-            dbg!(pc_path.clone());
-            dbg!(version.clone());
-            dbg!(description.clone());
-            dbg!(library_name.clone());
-            dbg!(header_target_path.clone());
+            println!("Library Name: {}", library_name);
+            println!("Version: {}", version);
+            println!("Description: {}", description);
+            println!("Library Source Path: {:?}", lib_source_path);
+            println!("Library Target Path: {:?}", lib_target_path);
+            println!("Header Source Path: {:?}", header_source_path);
+            println!("Header Target Path: {:?}", header_target_path);
+            println!("Pkg-config Path: {:?}", pc_path);
             
             generate_pc_file(&lib_target_path, &pc_path, &library_name, &version, &description)
                 .context("Failed to generate pc file")?;
