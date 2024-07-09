@@ -16,7 +16,7 @@ To install Dylib Installer, ensure you have Rust installed on your system. You c
 ### From Source
 
 ```sh
-git clone https://github.com/yourusername/dylib-installer.git
+git clone https://github.com/hackerchai/dylib-installer.git
 cd dylib-installer
 cargo build --release
 ```
@@ -26,7 +26,7 @@ The binary will be located in the `target/release` directory.
 ### Using Cargo Install
 
 ```sh
-cargo install --git https://github.com/yourusername/dylib-installer
+cargo install --git https://github.com/hackerchai/dylib-installer
 ```
 
 ## Usage
