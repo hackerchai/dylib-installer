@@ -71,9 +71,3 @@ We welcome contributions! Please open an issue or submit a pull request on GitHu
 ## License
 
 This project is licensed under the GPL License. See the [LICENSE](https://github.com/hackerchai/dylib-installer/blob/main/LICENSE) file for details.
-
----
-
-### Notes
-
-Make sure to replace `https://github.com/yourusername/dylib-installer.git` with the actual URL of your GitHub repository.
