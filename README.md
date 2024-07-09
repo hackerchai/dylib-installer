@@ -50,6 +50,8 @@ dylib_installer [OPTIONS]
 
 ### Example
 
+**Recommend to use sudo to install the library to system path.**
+
 ```sh
 dylib_installer \
     -d /path/to/dylibs \
