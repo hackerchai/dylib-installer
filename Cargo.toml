@@ -1,0 +1,17 @@
+[package]
+name = "dylib_installer"
+authors = ["Eason Chai <i@hackerchai.com>"]
+description = "A tool to install dylib files and header to system library path."
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = "4.5.9"
+shellexpand = "3.1.0"
+anyhow = "1.0"
+
+[profile.release]
+opt-level = "z"
+lto = "fat"
+panic = "abort"
+codegen-units = 1
