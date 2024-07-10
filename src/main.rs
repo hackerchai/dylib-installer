@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command as SysCommand;
@@ -94,10 +95,17 @@ async fn main() -> Result<()> {
             let library_name = if let Some(name) = matches.get_one::<String>("library_name") {
                 name.to_string()
             } else {
-                find_library_name(&lib_source_path).await.unwrap_or_else(|| {
-                    println!("No library name provided and no dylib file found in the directory. Exiting.");
-                    std::process::exit(1);
-                })
+                match find_library_name(&lib_source_path).await {
+                    Ok(Some(name)) => name,
+                    Ok(None) => {
+                        println!("No dylib files found in the directory.");
+                        std::process::exit(1);
+                    },
+                    Err(e) => {
+                        println!("{}", e);
+                        std::process::exit(1);
+                    }
+                }
             };
 
             //handle header files args
@@ -297,16 +305,27 @@ async fn get_system_lib_path() -> Result<PathBuf> {
 }
 
 // find library name from dylib path
-async fn find_library_name(lib_source_path: &Path) -> Option<String> {
-    let mut read_dir = fs::read_dir(lib_source_path).await.ok()?;
-    while let Some(entry) = read_dir.next_entry().await.ok()? {
+async fn find_library_name(lib_source_path: &Path) -> Result<Option<String>, String> {
+    let mut read_dir = match fs::read_dir(lib_source_path).await {
+        Ok(dir) => dir,
+        Err(_) => return Err("Failed to read directory".to_string()),
+    };
+    let mut names = HashSet::new();
+
+    while let Some(entry) = read_dir.next_entry().await.ok().flatten() {
         let path = entry.path();
-        if path.extension()? == "dylib" {
-            return path.file_stem()?.to_str().map(|s| {
-                // remove the `lib` prefix and the extension
-                s.trim_start_matches("lib").split('.').next().unwrap().to_string()
-            });
+        if path.extension().map_or(false, |ext| ext == "dylib") {
+            if let Some(lib_name) = path.file_stem()
+                .and_then(|s| s.to_str())
+                .map(|s| s.trim_start_matches("lib").split('.').next().unwrap().to_string()) {
+                names.insert(lib_name);
+            }
         }
     }
-    None
+
+    match names.len() {
+        0 => Err("No dylib files found in the directory".to_string()),
+        1 => Ok(names.into_iter().next()),  // Only one unique library name found
+        _ => Err("Multiple library names found, indicating a conflict".to_string()),
+    }
 }

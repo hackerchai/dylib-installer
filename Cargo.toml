@@ -14,6 +14,7 @@ shellexpand = "3.1.0"
 anyhow = "1.0"
 termcolor = "1.4.1"
 tokio = { version = "1", features = ["full"] }
+tempfile = "3.10.1"
 
 [profile.release]
 opt-level = "z"
