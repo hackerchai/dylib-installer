@@ -1,4 +1,4 @@
-name: Release
+name: Publish to Crates.io
 
 on:
   push:
@@ -31,12 +31,6 @@ jobs:
         run: |
           cargo build --release --verbose
           cargo test --verbose
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: target/release/dylib_installer
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       - name: Publish to Crates.io
         uses: actions-rs/cargo@v1
         with:

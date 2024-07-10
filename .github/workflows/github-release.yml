@@ -1,0 +1,53 @@
+name: Publish to GitHub Releases
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    name: Publish for ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: dylib_installer
+            release_name: dylib_installer-linux-amd64
+            target: x86_64-unknown-linux-gnu
+          - os: windows-latest
+            artifact_name: dylib_installer.exe
+            release_name: dylib_installer-windows-amd64.exe
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            artifact_name: dylib_installer
+            release_name: dylib_installer-macos-amd64
+            target: x86_64-apple-darwin
+          - os: ubuntu-latest
+            artifact_name: dylib_installer
+            release_name: dylib_installer-linux-arm64
+            target: aarch64-unknown-linux-musl
+          - os: macos-14
+            artifact_name: dylib_installer
+            release_name: dylib_installer-macos-arm64
+            target: aarch64-apple-darwin
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: build
+          target: ${{ matrix.target }}
+          args: --release --target ${{ matrix.target }} --locked --no-default-features
+          strip: true
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.ACCESS_TOKEN }}
+          file: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+          asset_name: ${{ matrix.release_name }}
+          tag: ${{ github.ref }}
