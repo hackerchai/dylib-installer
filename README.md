@@ -13,6 +13,14 @@ Dylib Installer is a tool for handling dylib directories and generating .pc file
 
 To install Dylib Installer, ensure you have Rust installed on your system. You can install the project from source or using `cargo install`:
 
+### From brew
+If you are using macOS, you can install the tool using Homebrew:
+
+```sh
+brew tap hackerchai/dylib-installer
+brew install dylib-installer
+```
+
 ### From Source
 
 ```sh
