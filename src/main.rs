@@ -288,7 +288,7 @@ async fn get_system_lib_path() -> Result<PathBuf> {
     if path.exists() {
         Ok(path)
     } else {
-        let fallbacks = ["/usr/local/lib", "/usr/lib", "/lib"];
+        let fallbacks = ["/usr/local/lib", "/usr/lib", "/lib", "/usr/lib64", "/lib64"];
         fallbacks.iter()
             .map(|&p| PathBuf::from(p))
             .find(|p| p.exists())
