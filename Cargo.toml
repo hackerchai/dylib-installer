@@ -2,7 +2,7 @@
 name = "dylib_installer"
 authors = ["Eason Chai <i@hackerchai.com>"]
 description = "A tool to install dylib files and header to system library path."
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license-file = "LICENSE"
 homepage = "https://github.com/hackerchai/dylib-installer"
