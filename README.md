@@ -26,8 +26,15 @@ The binary will be located in the `target/release` directory.
 ### Using Cargo Install
 
 ```sh
-cargo install --git https://github.com/hackerchai/dylib-installer
+cargo install dylib_installer
 ```
+
+Or installing with latest head from repository:
+
+```sh
+cargo install --git https://github.com/hackerchai/dylib-installer
+
+````
 
 ## Usage
 
