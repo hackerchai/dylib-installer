@@ -36,7 +36,7 @@ jobs:
         with:
           files: target/release/dylib_installer
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       - name: Publish to Crates.io
         uses: actions-rs/cargo@v1
         with:
