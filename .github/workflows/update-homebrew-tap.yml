@@ -1,0 +1,74 @@
+name: Update Homebrew Tap
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-tap:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Clone Homebrew Tap repository
+        run: |
+          git clone https://github.com/hackerchai/homebrew-tap.git
+          cd homebrew-tap
+          git checkout -b update-formula
+
+      - name: Download and Calculate SHA256
+        run: |
+          version=${{ github.event.release.tag_name }}
+          curl -LO https://github.com/hackerchai/dylib-installer/releases/download/$version/dylib_installer-macos-amd64
+          curl -LO https://github.com/hackerchai/dylib-installer/releases/download/$version/dylib_installer-macos-arm64
+          sha256_amd64=$(sha256sum dylib_installer-macos-amd64 | awk '{print $1}')
+          sha256_arm64=$(sha256sum dylib_installer-macos-arm64 | awk '{print $1}')
+
+          cat <<EOF > homebrew-tap/dylib-installer.rb
+  class DylibInstaller < Formula
+  desc "Tool to install dylib files and header to system library path written in rust."
+  homepage "https://github.com/hackerchai/dylib-installer"
+  license "gpl-3.0"
+  version "$version"
+
+  if Hardware::CPU.intel?
+  url "https://github.com/hackerchai/dylib-installer/releases/download/\${version}/dylib_installer-macos-amd64"
+  sha256 "$sha256_amd64"
+  elsif Hardware::CPU.arm?
+  url "https://github.com/hackerchai/dylib-installer/releases/download/\${version}/dylib_installer-macos-arm64"
+  sha256 "$sha256_arm64"
+  end
+
+  def install
+  bin.install "dylib-installer"
+  end
+
+  test do
+  system "#{bin}/dylib-installer", "--help"
+  end
+  end
+  EOF
+
+- name: Commit and Push changes
+  run: |
+    cd homebrew-tap
+    git add dylib-installer.rb
+    git commit -m "Update dylib-installer formula to version ${{ github.event.release.tag_name }}"
+    git push origin update-formula
+
+- name: Create Pull Request
+  uses: peter-evans/create-pull-request@v4
+  with:
+    token: ${{ secrets.ACCESS_TOKEN }}
+    commit-message: "Update dylib-installer formula to version ${{ github.event.release.tag_name }}"
+    branch: update-formula
+    title: "Update dylib-installer formula to version ${{ github.event.release.tag_name }}"
+    body: "This PR updates the dylib-installer formula to version ${{ github.event.release.tag_name }}."
+    labels: "auto-update"
