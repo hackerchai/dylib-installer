@@ -1,0 +1,49 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build and Test on ${{ matrix.toolchain }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        toolchain: [stable, nightly]
+        include:
+          - toolchain: stable
+            features: ''
+          - toolchain: nightly
+            features: 'nightly'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          profile: minimal
+          override: true
+          components: clippy
+      - name: Cache Cargo Registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Check with Clippy
+        if: matrix.toolchain == 'stable'
+        run: cargo clippy -- -D warnings
+      - name: Build with features
+        run: cargo build --verbose --features ${{ matrix.features }}
+      - name: Run tests with features
+        run: cargo test --verbose --features ${{ matrix.features }}
