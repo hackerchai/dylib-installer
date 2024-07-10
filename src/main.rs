@@ -14,25 +14,21 @@ async fn main() -> Result<()> {
         .author("LLGO Team")
         .about("Handles dylib directories and generates .pc files")
         .arg(Arg::new("dylib_path")
-            .short('d')
-            .long("dylib")
-            .value_name("DIR")
+            .value_name("DYLIB_PATH")
             .help("Sets the directory where the dylib files are stored")
-            .action(ArgAction::Set)
-            .required(true))
+            .required(true)
+            .index(1))
+        .arg(Arg::new("header_path")
+            .value_name("HEADERPATH")
+            .help("Sets the path to store the header files")
+            .index(2)
+        )
         .arg(Arg::new("library_name")
             .short('n')
             .long("name")
             .value_name("NAME")
             .help("Sets the name of the library")
             .action(ArgAction::Set))
-        .arg(Arg::new("header_path")
-            .short('i')
-            .long("headerpath")
-            .value_name("HEADERPATH")
-            .help("Sets the path to store the header files")
-            .action(ArgAction::Set)
-        )
         .arg(Arg::new("version")
             .short('v')
             .long("version")
@@ -103,7 +99,7 @@ async fn main() -> Result<()> {
                     std::process::exit(1);
                 })
             };
-            
+
             //handle header files args
             let header_target_path = matches.get_one::<String>("header_target_path")
                 .map(PathBuf::from)
@@ -115,7 +111,7 @@ async fn main() -> Result<()> {
                 Some(p) => Some(fs::canonicalize(p).await.context("Failed to convert header_path to absolute path")?),
                 None => None,
             };
-            
+
             // print the library information
             let mut stdout = StandardStream::stdout(ColorChoice::Always);
 
@@ -131,10 +127,10 @@ async fn main() -> Result<()> {
             print_colored(&mut stdout, "Pkg-config Path: ", &format!("{:?}", pc_path), Color::Green)?;
             let pc_full_path = pc_path.join(format!("{}.pc", library_name));
             print_colored(&mut stdout, "PC File Path: ", &format!("{:?}", pc_full_path), Color::Green)?;
-            
+
             //clone the paths for async tasks
             let lib_target_path_clone = lib_target_path.clone();
-            
+
             // spawn async tasks
             let pc_task = task::spawn(async move {
                 generate_pc_file(&lib_target_path, &pc_path, &library_name, &version, &description).await
@@ -150,11 +146,11 @@ async fn main() -> Result<()> {
                         copy_header_files(&header_path, &header_target_path).await
                     }))
                 } else {
-                    println!("Warning: Header path provided does not exist, skipping header file copy.");
+                    print_colored(&mut stdout, "Warning!!!", " Header path provided does not exist", Color::Yellow)?;
                     None
                 }
             } else {
-                println!("No header files provided, skipping header file copy.");
+                print_colored(&mut stdout, "Warning!!!", " No header files provided", Color::Yellow)?;
                 None
             };
 
@@ -163,7 +159,7 @@ async fn main() -> Result<()> {
             if let Some(task) = header_task {
                 task.await??;
             }
-            
+
             print_colored(&mut stdout, "Success!!!", " Library installation completed successfully", Color::Green)?;
         }
         Err(ref e) if e.kind() == ErrorKind::MissingRequiredArgument => {

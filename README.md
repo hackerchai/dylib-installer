@@ -34,12 +34,15 @@ cargo install --git https://github.com/hackerchai/dylib-installer
 Dylib Installer requires several arguments to specify the paths and options. Here are the available options:
 
 ```sh
-dylib_installer [OPTIONS]
+dylib_installer [OPTIONS] <dylib_path> [HEADERPATH]
 ```
+### Arguments:
+- `<dylib_path>`  Sets the directory where the dylib files are stored.(required)
+
+- `[HEADERPATH]`  Sets the path to store the header files
 
 ### Options
 
-- `-d, --dylib <DIR>`: Sets the directory where the dylib files are stored. (Required)
 - `-n, --name <NAME>`: Sets the name of the library. If not provided, it will be inferred from the dylib file name.
 - `-i, --headerpath <HEADERPATH>`: Sets the path to store the header files.
 - `-v, --version <VERSION>`: Sets the version of the library. Default is "0.1.0".
@@ -47,22 +50,27 @@ dylib_installer [OPTIONS]
 - `-p, --pcpath <PCPATH>`: Sets the path to store the .pc file. If not provided, it will use the default pkg-config path.
 - `-t, --libpath <LIBPATH>`: Sets the target path for the library files. If not provided, it will use the system library path.
 - `-r, --header_target_path <HEADER_TARGET_PATH>`: Sets the target path for the header files.
+- `-h, --help`: Print help.
 
 ### Example
 
 **Recommend to use sudo to install the library to system path.**
 
-```sh
-dylib_installer \
-    -d /path/to/dylibs \
-    -n mylibrary \
-    -i /path/to/headers \
-    -v 1.0.0 \
-    -c "My Library Description" \
-    -p /path/to/pkgconfig \
-    -t /usr/local/lib \
-    -r /usr/local/include/mylibrary
-```
+- In most cases (without specifying headers):
+    ```sh
+    sudo dylib_installer /path/to/dylibs
+    ```
+
+- If you want to specify full options:
+    ```sh
+    dylib_installer /path/to/dylibs /path/to/headers \
+        -n mylibrary \
+        -v 0.1.0 \
+        -c "My Library Description" \
+        -p /path/to/pkgconfig \
+        -t /usr/local/lib \
+        -r /usr/local/include/mylibrary
+    ```
 
 If you do not provide a library name, the tool will attempt to infer it from the `.dylib` file names found in the specified directory. For example, if it finds a file named `libfuse.dylib` or `libfuse.2.1.dylib`, it will use `fuse` as the library name.
 
