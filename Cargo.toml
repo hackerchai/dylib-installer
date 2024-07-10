@@ -4,6 +4,10 @@ authors = ["Eason Chai <i@hackerchai.com>"]
 description = "A tool to install dylib files and header to system library path."
 version = "0.1.0"
 edition = "2021"
+license = "GPL-3"
+license-file = "LICENSE"
+homepage = "https://github.com/hackerchai/dylib-installer"
+repository = "https://github.com/hackerchai/dylib-installer"
 
 [dependencies]
 clap = "4.5.9"
