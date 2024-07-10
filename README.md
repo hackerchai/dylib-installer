@@ -17,7 +17,7 @@ To install Dylib Installer, ensure you have Rust installed on your system. You c
 If you are using macOS, you can install the tool using Homebrew:
 
 ```sh
-brew tap hackerchai/dylib-installer
+brew tap hackerchai/tap
 brew install dylib-installer
 ```
 
