@@ -31,44 +31,42 @@ jobs:
           sha256_amd64=$(sha256sum dylib_installer-macos-amd64 | awk '{print $1}')
           sha256_arm64=$(sha256sum dylib_installer-macos-arm64 | awk '{print $1}')
 
-          cat <<EOF > homebrew-tap/dylib-installer.rb
-  class DylibInstaller < Formula
-  desc "Tool to install dylib files and header to system library path written in rust."
-  homepage "https://github.com/hackerchai/dylib-installer"
-  license "gpl-3.0"
-  version "$version"
+          echo "class DylibInstaller < Formula" > homebrew-tap/dylib-installer.rb
+          echo "  desc \"Tool to install dylib files and header to system library path written in rust.\"" >> homebrew-tap/dylib-installer.rb
+          echo "  homepage \"https://github.com/hackerchai/dylib-installer\"" >> homebrew-tap/dylib-installer.rb
+          echo "  license \"gpl-3.0\"" >> homebrew-tap/dylib-installer.rb
+          echo "  version \"$version\"" >> homebrew-tap/dylib-installer.rb
+          echo "" >> homebrew-tap/dylib-installer.rb
+          echo "  if Hardware::CPU.intel?" >> homebrew-tap/dylib-installer.rb
+          echo "    url \"https://github.com/hackerchai/dylib-installer/releases/download/$version/dylib_installer-macos-amd64\"" >> homebrew-tap/dylib-installer.rb
+          echo "    sha256 \"$sha256_amd64\"" >> homebrew-tap/dylib-installer.rb
+          echo "  elsif Hardware::CPU.arm?" >> homebrew-tap/dylib-installer.rb
+          echo "    url \"https://github.com/hackerchai/dylib-installer/releases/download/$version/dylib_installer-macos-arm64\"" >> homebrew-tap/dylib-installer.rb
+          echo "    sha256 \"$sha256_arm64\"" >> homebrew-tap/dylib-installer.rb
+          echo "  end" >> homebrew-tap/dylib-installer.rb
+          echo "" >> homebrew-tap/dylib-installer.rb
+          echo "  def install" >> homebrew-tap/dylib-installer.rb
+          echo "    bin.install \"dylib-installer\"" >> homebrew-tap/dylib-installer.rb
+          echo "  end" >> homebrew-tap/dylib-installer.rb
+          echo "" >> homebrew-tap/dylib-installer.rb
+          echo "  test do" >> homebrew-tap/dylib-installer.rb
+          echo "    system \"\#{bin}/dylib-installer\", \"--help\"" >> homebrew-tap/dylib-installer.rb
+          echo "  end" >> homebrew-tap/dylib-installer.rb
+          echo "end" >> homebrew-tap/dylib-installer.rb
 
-  if Hardware::CPU.intel?
-  url "https://github.com/hackerchai/dylib-installer/releases/download/\${version}/dylib_installer-macos-amd64"
-  sha256 "$sha256_amd64"
-  elsif Hardware::CPU.arm?
-  url "https://github.com/hackerchai/dylib-installer/releases/download/\${version}/dylib_installer-macos-arm64"
-  sha256 "$sha256_arm64"
-  end
+      - name: Commit and Push changes
+        run: |
+          cd homebrew-tap
+          git add dylib-installer.rb
+          git commit -m "Update dylib-installer formula to version ${{ github.event.release.tag_name }}"
+          git push origin update-formula
 
-  def install
-  bin.install "dylib-installer"
-  end
-
-  test do
-  system "#{bin}/dylib-installer", "--help"
-  end
-  end
-  EOF
-
-- name: Commit and Push changes
-  run: |
-    cd homebrew-tap
-    git add dylib-installer.rb
-    git commit -m "Update dylib-installer formula to version ${{ github.event.release.tag_name }}"
-    git push origin update-formula
-
-- name: Create Pull Request
-  uses: peter-evans/create-pull-request@v4
-  with:
-    token: ${{ secrets.ACCESS_TOKEN }}
-    commit-message: "Update dylib-installer formula to version ${{ github.event.release.tag_name }}"
-    branch: update-formula
-    title: "Update dylib-installer formula to version ${{ github.event.release.tag_name }}"
-    body: "This PR updates the dylib-installer formula to version ${{ github.event.release.tag_name }}."
-    labels: "auto-update"
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.ACCESS_TOKEN }}
+          commit-message: "Update dylib-installer formula to version ${{ github.event.release.tag_name }}"
+          branch: update-formula
+          title: "Update dylib-installer formula to version ${{ github.event.release.tag_name }}"
+          body: "This PR updates the dylib-installer formula to version ${{ github.event.release.tag_name }}."
+          labels: "auto-update"
