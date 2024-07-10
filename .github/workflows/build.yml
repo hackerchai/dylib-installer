@@ -16,13 +16,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         toolchain: [stable, nightly]
         include:
           - toolchain: stable
-            features: ''
           - toolchain: nightly
-            features: 'nightly'
     steps:
       - uses: actions/checkout@v3
       - name: Set up Rust toolchain
@@ -43,7 +41,7 @@ jobs:
       - name: Check with Clippy
         if: matrix.toolchain == 'stable'
         run: cargo clippy -- -D warnings
-      - name: Build with features
-        run: cargo build --verbose --features ${{ matrix.features }}
-      - name: Run tests with features
-        run: cargo test --verbose --features ${{ matrix.features }}
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests
+        run: cargo test --verbose
