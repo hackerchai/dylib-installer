@@ -22,7 +22,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/release/your_binary_name
+          files: target/release/dylib_installer
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish to Crates.io
