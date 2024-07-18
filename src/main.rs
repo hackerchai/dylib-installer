@@ -65,7 +65,12 @@ async fn main() -> Result<()> {
     let matches = app.clone().try_get_matches();
     match matches {
         Ok(matches) => {
-            let dylib_path = matches.get_one::<String>("dylib_path").unwrap();
+            let dylib_path = matches.get_one::<String>("dylib_path")
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| {
+                println!("Error: Missing required argument: dylib_path");
+                std::process::exit(1);
+            });
             let version = matches.get_one::<String>("version")
                 .map(|s| s.to_string())
                 .unwrap_or_else(|| "0.1.0".to_string());
@@ -195,6 +200,13 @@ fn print_colored(stdout: &mut StandardStream, label: &str, value: &str, color: C
 
 // generate the .pc file
 async fn generate_pc_file(lib_target_path: &Path, pc_path: &Path, library_name: &str, version: &str, description: &str) -> Result<()> {
+    // create the directory if it does not exist
+    if !pc_path.exists() {
+        fs::create_dir_all(pc_path).await.context("Failed to create pc config directory")?;
+    }
+    if !lib_target_path.exists() {
+        fs::create_dir_all(lib_target_path).await.context("Failed to create lib directory")?;
+    }
     // check if the target path is `lib` or `lib64`
     let libdir_suffix = if let Some(component) = lib_target_path.components().last() {
         let dir = component.as_os_str().to_str().unwrap_or("");
@@ -227,7 +239,7 @@ async fn generate_pc_file(lib_target_path: &Path, pc_path: &Path, library_name: 
 // copy library files
 async fn copy_lib_files(source: &Path, target: &Path) -> Result<()> {
     if !target.exists() {
-        return Err(anyhow::anyhow!("target lib directory not exists: {}", source.display()));
+        fs::create_dir_all(target).await.context("Failed to create lib directory")?;
     }
     let mut entries = fs::read_dir(source).await.context("Failed to read source directory")?;
     while let Some(entry) = entries.next_entry().await? {
@@ -236,7 +248,7 @@ async fn copy_lib_files(source: &Path, target: &Path) -> Result<()> {
             continue; // skip directories
         }
         if let Some(ext) = path.extension() {
-            if ext == "a" || ext == "dylib" || ext == "d" {
+            if ext == "a" || ext == "dylib" || ext == "so" {
                 fs::copy(&path, target.join(path.file_name().unwrap())).await
                     .with_context(|| format!("Failed to copy file from {:?} to {:?}", path, target))?;
             }
@@ -248,7 +260,7 @@ async fn copy_lib_files(source: &Path, target: &Path) -> Result<()> {
 // copy header files
 async fn copy_header_files(source: &Path, target: &Path) -> Result<()> {
     if !target.exists() {
-        fs::create_dir_all(target).await.context("Failed to create target directory")?;
+        fs::create_dir_all(target).await.context("Failed to create header directory")?;
     }
 
     let mut entries = fs::read_dir(source).await.context("Failed to read source directory")?;
@@ -270,6 +282,11 @@ async fn copy_header_files(source: &Path, target: &Path) -> Result<()> {
 
 // get the pkg-config path
 async fn get_pc_path() -> Result<PathBuf> {
+    // check if pkg-config is installed
+    if SysCommand::new("pkg-config").output().is_err() {
+        return Err(anyhow::anyhow!("pkg-config not found. Please install pkg-config."));
+    }
+
     let output = task::spawn_blocking(|| {
         SysCommand::new("pkg-config")
             .arg("--variable=pc_path")
@@ -311,20 +328,35 @@ async fn find_library_name(lib_source_path: &Path) -> Result<Option<String>, Str
         Err(_) => return Err("Failed to read directory".to_string()),
     };
     let mut names = HashSet::new();
+    let mut has_dylib = false;
+    let mut has_so = false;
 
     while let Some(entry) = read_dir.next_entry().await.ok().flatten() {
         let path = entry.path();
-        if path.extension().map_or(false, |ext| ext == "dylib") {
-            if let Some(lib_name) = path.file_stem()
-                .and_then(|s| s.to_str())
-                .map(|s| s.trim_start_matches("lib").split('.').next().unwrap().to_string()) {
-                names.insert(lib_name);
+        if let Some(extension) = path.extension() {
+            if extension == "dylib" {
+                has_dylib = true;
+            } else if extension == "so" {
+                has_so = true;
+            }
+
+            if extension == "dylib" || extension == "so" {
+                if let Some(lib_name) = path.file_stem()
+                    .and_then(|s| s.to_str())
+                    .map(|s| s.trim_start_matches("lib").split('.').next().unwrap().to_string()) {
+                    names.insert(lib_name);
+                }
             }
         }
     }
 
+    // check for conflicts for both linux & macos libraries
+    if has_dylib && has_so {
+        return Err("Both dylib and so files found in the directory, indicating a conflict".to_string());
+    }
+
     match names.len() {
-        0 => Err("No dylib files found in the directory".to_string()),
+        0 => Err("No dylib or so files found in the directory".to_string()),
         1 => Ok(names.into_iter().next()),  // Only one unique library name found
         _ => Err("Multiple library names found, indicating a conflict".to_string()),
     }
