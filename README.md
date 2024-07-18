@@ -9,6 +9,49 @@ Dylib Installer is a tool for handling dylib directories and generating .pc file
 - Copies library files to the target directory.
 - Optionally copies header files to the target directory.
 
+## Pre-requisites
+You will need the following tools installed on your system to use Dylib Installer:
+- pkg-config
+
+### Installing pkg-config
+If you are using macOS, you can install pkg-config using Homebrew:
+
+```sh 
+brew install pkg-config
+```
+
+If you are using Linux, you can install pkg-config using your package manager:
+
+- Debian/Ubuntu:
+
+```sh
+sudo apt-get install pkg-config
+```
+
+- Fedora:
+
+```sh
+sudo dnf install pkg-config
+```
+
+- CentOS/RHEL:
+
+```sh
+sudo yum install pkg-config
+```
+
+- Arch Linux:
+
+```sh
+sudo pacman -S pkg-config
+```
+
+- Alpine Linux:
+
+```sh
+apk add pkgconfig
+```
+
 ## Installation
 
 To install Dylib Installer, ensure you have Rust installed on your system. You can install the project from source or using `cargo install`:
